@@ -1,5 +1,7 @@
+import json
 import requests
 from lxml import etree
+
 #from bs4 import BeautifulStoneSoup
 #import time
 
@@ -29,7 +31,7 @@ def get_job_detail_url():
     r = requests.get(url, headers=HEADER)
     htmltree = etree.HTML(r.text)
     job_url_list = htmltree.xpath('//*[@id="newlist_list_content_table"]/div')
-
+    next_page_url = htmltree.xpath('//*[@class="pagesDown-pos"]/a/@href')[0]
     for job in job_url_list:
         yield job.xpath('./div/ul/li[1]/div/a/@href')
 
@@ -40,12 +42,14 @@ def get_job_information(job_detail_url):
     r = requests.get(job_detail_url, headers=HEADER) 
     htmltree = etree.HTML(r.text)
     job_informations = htmltree.xpath('/html/body/div[6]/div[1]/ul/li')
+    infdict = {}
     for inf in job_informations:
-        infstr = '{0}{1}{2}{3}'.format(inf.xpath('./span/text()')[0], ''.join(inf.xpath('./strong/a/text()')), ''.join(inf.xpath('./strong/text()')),''.join(inf.xpath('./strong/span/text()')))
-           
-        print(infstr)
-
+        #infstr = '{0}{1}{2}{3}'.format(inf.xpath('./span/text()')[0], ''.join(inf.xpath('./strong/a/text()')), ''.join(inf.xpath('./strong/text()')),''.join(inf.xpath('./strong/span/text()')))
+        #print(infstr)
+        infdict[inf.xpath('./span/text()')[0]] = '{0}{1}{2}'.format( ''.join(inf.xpath('./strong/a/text()')), ''.join(inf.xpath('./strong/text()')),''.join(inf.xpath('./strong/span/text()')))
+    return infdict
 
 urllist = get_job_detail_url()
 for url in urllist:
-    get_job_information(url[0])
+    with open(".\_result\{job}-{local}.txt".format(job = '快递员速递员',local = '广东'),"a") as f:
+            f.write(json.dumps(get_job_information(url[0]),encoding = 'utf-8')+'\n\n')
