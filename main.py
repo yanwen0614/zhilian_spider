@@ -17,7 +17,7 @@ HEADER = {
 
 city_url = "http://sou.zhaopin.com/jobs/searchresult.ashx?bj=4010400&sj={job}&jl={city}&sm=1&isfilter=0&isadv=0&sg=8d72699a3b294a0ca519afcdb5b77b6b"
 city_list ='广东 湖北 陕西 四川 辽宁 吉林 江苏 山东 浙江 广西 安徽 河北 山西 内蒙 黑龙江 福建 江西 河南 湖南 海南 贵州 云南 西藏 甘肃 青海 宁夏 新疆 北京 上海 广州 深圳 天津 重庆'.split()
-jobdict = {'快递员/速递员': 247}
+jobdict = {'快递员速递员': 247}
 
 
 def get_joblist_url(rawurl, citylist, job):
@@ -25,13 +25,18 @@ def get_joblist_url(rawurl, citylist, job):
         yield rawurl.format(city=city, job=job)
 
 
-def get_job_detail_url():
+def get_JobUrlList_and_NextPageUrl(url = ''):
     # for url in geturl(city_url, city_list, jobdict['快递员/速递员']):
-    url = city_url.format(city='广东', job=247)
+    if not url:
+        url = city_url.format(city='广东', job=247)
     r = requests.get(url, headers=HEADER)
     htmltree = etree.HTML(r.text)
     job_url_list = htmltree.xpath('//*[@id="newlist_list_content_table"]/div')
     next_page_url = htmltree.xpath('//*[@class="pagesDown-pos"]/a/@href')[0]
+    return job_url_list, next_page_url
+
+
+def get_job_detail_url(job_url_list):
     for job in job_url_list:
         yield job.xpath('./div/ul/li[1]/div/a/@href')
 
@@ -49,7 +54,14 @@ def get_job_information(job_detail_url):
         infdict[inf.xpath('./span/text()')[0]] = '{0}{1}{2}'.format( ''.join(inf.xpath('./strong/a/text()')), ''.join(inf.xpath('./strong/text()')),''.join(inf.xpath('./strong/span/text()')))
     return infdict
 
-urllist = get_job_detail_url()
-for url in urllist:
-    with open(".\_result\{job}-{local}.txt".format(job = '快递员速递员',local = '广东'),"a") as f:
-            f.write(json.dumps(get_job_information(url[0]),encoding = 'utf-8')+'\n\n')
+urllist, nextpageurl = get_JobUrlList_and_NextPageUrl()
+i=1
+while nextpageurl:
+
+    detailurllist = get_job_detail_url(urllist)
+    for detailurl in detailurllist:
+        with open("./_result/{job}-{local}".format(job='快递员速递员', local='广东'),"a") as f:
+                f.write(json.dumps(get_job_information(detailurl[0]), ensure_ascii=False)+'\n')
+    print(i)
+    i=i+1
+    urllist, nextpageurl = get_JobUrlList_and_NextPageUrl()
