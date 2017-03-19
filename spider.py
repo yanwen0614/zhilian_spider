@@ -16,14 +16,14 @@ HEADER = {
         }
 
 city_url = "http://sou.zhaopin.com/jobs/searchresult.ashx?bj=4010400&sj={job}&jl={city}&sm=1&isfilter=0&isadv=0&pd=-1&sg=8d72699a3b294a0ca519afcdb5b77b6b"
-city_list ='广东 湖北 陕西 四川 辽宁 吉林 江苏 山东 浙江 广西 安徽 河北 山西 内蒙 黑龙江 福建 江西 河南 湖南 海南 贵州 云南 西藏 甘肃 青海 宁夏 新疆 北京 上海 广州 深圳 天津 重庆'.split()
+city_list ='新疆 北京 上海 广州 深圳 天津 重庆'.split()
 jobdict = {'快递员速递员': 247}
-
+# 广东 湖北 陕西 四川 辽宁 吉林 江苏 山东 浙江 广西 安徽 河北 山西 内蒙 黑龙江 福建 江西 河南 湖南 海南 贵州 云南 西藏 甘肃 青海 宁夏 
 
 def getReqests(url,header):
     try:
         r = requests.get(url, headers=header)
-    except ConnectionError as CE:
+    except requests.exceptions.ConnectionError as CE:
         with open("log.txt", 'a') as f:
             traceback.print_exc(file=f)
             f.flush()
@@ -76,7 +76,10 @@ def main(job):
             detailurllist = get_job_detail_url(urllist)
             for detailurl in detailurllist:
                 with open(".\\_result\\{job}-{local}.txt".format(job='快递员速递员', local=city),"a",encoding='utf-8') as f:
+                    try:
                         f.write(json.dumps(get_job_information(detailurl[0]), ensure_ascii=False,)+'\n') # .encode('GBk','ignore').decode('GBk')
+                    except:
+                        break
             print(i)
             print(nextpageurl)
             i = i + 1
